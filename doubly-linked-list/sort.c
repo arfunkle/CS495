@@ -58,7 +58,7 @@ int main(int argc, char *argv[]) {
     prog = argv[0];
     struct list *l = list_new();
     read(l);
-    //sort(l);
+    sort(l);
     print(l);
 }
 
@@ -67,13 +67,10 @@ int main(int argc, char *argv[]) {
  * @return a new empty list
  */
 struct list *list_new() {
-  struct list *newList = (struct list *)malloc(sizeof(struct list));
-  struct node *start = (struct node *)malloc(sizeof(struct node));
-  struct node *end = (struct node *)malloc(sizeof(struct node));
-  start->next = end;
-  end->prev = start;
-  newList->head = *start;
-  newList->tail = *end;
+  struct list *newList = malloc(sizeof(struct list));
+  newList->head.next = &newList->tail;
+  newList->tail.prev = &newList->head;
+
   return newList;
 }
 
@@ -84,13 +81,12 @@ struct list *list_new() {
  */
 void list_add(struct list *l, double d) {
   struct node *tail = &l->tail;
-  struct node *newNode = (struct node *)malloc(sizeof(struct node));
+  struct node *newNode = malloc(sizeof(struct node));
   newNode->value = d;
   newNode->next = tail;
   newNode->prev = tail->prev;
   tail->prev->next = newNode;
   tail->prev = newNode;
-  free(newNode);
 }
 
 /**
@@ -98,15 +94,25 @@ void list_add(struct list *l, double d) {
  * @param n  the node to swap with its next neighbor
  */
 void list_swap(struct node *n) {
-    struct node *next = n->next;
-    next->next = next;
-    next->prev = n->prev;
-    n->next = n->next->next;
-    n->prev = n;
-    n = n->next;
-    next = n->prev;
-    n->prev = next;
-    free(next);
+    struct node *newNode = malloc(sizeof(struct node));
+    struct node *oldNode = malloc(sizeof(struct node));
+    struct node *temp = malloc(sizeof(struct node));
+    
+    newNode = n->next;
+    oldNode = n;
+    temp = newNode->next;
+    
+    newNode->next = oldNode->next;
+    oldNode->next = temp;
+    temp->prev = oldNode;
+    
+    temp = oldNode->prev;
+    
+    oldNode->prev = newNode->prev;
+    newNode->prev = temp;
+    temp->next = newNode;
+    
+    
 }
 
 /**
@@ -121,12 +127,7 @@ void read(struct list *l) {
   
   double x;
   while (scanf("%lf", &x) != EOF) {
-    struct node *next = (struct node *)malloc(sizeof(struct node));
-    next->prev = tailVal;
-    next->value = x;
-    next->next = tail;
-    tailVal->next = next;
-    tail->prev = next;
+    list_add(l, x);
   }
 }
 
@@ -157,15 +158,13 @@ void sort(struct list *l) {
  * @param l  Pointer to valid doubly-linked list to print
  */
 void print(struct list *l) {
-  struct node *start = (struct node *)malloc(sizeof(struct node));
-  start = &l->head;
+  struct node *start = l->head.next;
   bool end = false;
   while (!end) {
     printf("%lf\n",start->value);
-    struct node *next = (struct node *)malloc(sizeof(struct node));
-    next = start->next;
-    start = next;
-    if (start->value) end = true;
+    struct node next = *start->next;
+    start = &next;
+    if (!start->value) end = true;
     
   }
 }
